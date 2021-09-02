@@ -1,6 +1,6 @@
 # File value checker
 When creating a data structure from a file this script allows to count the occurence of a value for a variable from inside a selection of files.
-To use define your file reader inside file_definitions and modify the `config.json` file.
+To use define your file reader inside file_definitions, modify the `config.json` file and run `compile_info.py`
 
 ## Configuring the script
 The `config.json` is organized with one large array named `to_investigate` which contain a dictionnary of the different logs to make. This dictionnary is organized as follow :
