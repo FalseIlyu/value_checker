@@ -10,8 +10,6 @@ from file_definitions.file_definition_utilities import (
     read_int32,
 )
 
-strideFormat = [4, 12, 8, 4, 1]
-
 
 class BWMFile:
 
@@ -266,7 +264,7 @@ class Stride:
                 (read_int32(reader), read_int32(reader)) for i in range(self.count)
             ]
             self.stride = 0
-            for (id, ssize) in self.idSizes:
+            for (_, ssize) in self.idSizes:
                 self.stride = self.stride + stride_format[ssize]
             size = 0x88 - 4 - (8 * self.count)
             self.unknown = reader.read(size)
@@ -301,12 +299,14 @@ class Vertex:
                     self.uvs.append((read_float(reader), read_float(reader)))
             return
 
-
-if __name__ == "__main__":
-
-    # test call
+def main():
     with open(
         "G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekstoragepit.bwm",
         "rb",
     ) as testBWM:
         file = BWMFile(testBWM)
+
+if __name__ == "__main__":
+
+    # test call
+    main()

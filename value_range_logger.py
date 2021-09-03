@@ -7,51 +7,7 @@ from os import path
 
 from typing import Dict, List, Sequence
 
-import pandas
 from pandas.core.frame import DataFrame
-
-
-def add_to_value(
-    value_to_recover, var_data_frame: pandas.DataFrame
-) -> pandas.DataFrame:
-    """Add one to the count of one value, set it to one if it doesn't exist"""
-    if var_data_frame["Value"].isin([value_to_recover]).any():
-        var_data_frame.loc[var_data_frame["Value"] == value_to_recover, "Count"] += 1
-    else:
-        dataframe = DataFrame({"Value": [value_to_recover], "Count": [1]})
-        var_data_frame = var_data_frame.append(dataframe)
-
-    return var_data_frame
-
-
-def look_for_value(
-    var_seq, file_data_structure, var_name, dictionary
-) -> None:
-    """Initiate search for a value in a FileDataStructure"""
-
-    def lookup_function(var_seq, last):
-        """Recursive search in FileDataStructure for var_name (argument of look_for_value)"""
-        if isinstance(last, List):
-            for obj in last:
-                lookup_function(var_seq, obj)
-        else:
-            match = re.search(r"\[\d+\]", var_seq[0])
-            if match:
-                ind = int(var_seq[0][match.span()[0] + 1 : match.span()[1] - 1])
-                curr = getattr(last, var_seq[0][: match.span()[0]])[ind]
-            else:
-                curr = getattr(last, var_seq[0])
-            if not isinstance(curr, bytes) and isinstance(curr, List):
-                value = len(curr)
-            else:
-                value = curr
-
-            if len(var_seq) > 1:
-                lookup_function(var_seq[1:], curr)
-            else:
-                dictionary[var_name] = add_to_value(value, dictionary[var_name])
-
-    lookup_function(var_seq, file_data_structure)
 
 
 class ValueRangeLogger:
@@ -67,7 +23,7 @@ class ValueRangeLogger:
         call file_not_read
     """
 
-    logged_var: Dict[str, pandas.DataFrame]
+    logged_var: Dict[str, Dict]
 
     def __init__(self, variables_name: Sequence[str]) -> None:
         self.logged_var = {}
@@ -75,16 +31,41 @@ class ValueRangeLogger:
         self.read_files = []
         self.log_path = ""
         for var_name in variables_name:
-            self.logged_var.update(
-                {var_name: pandas.DataFrame(columns=("Value", "Count"))}
-            )
+            self.logged_var.update({var_name: {}})
 
     def update(self, file_data_structure) -> None:
         """Looked for variable value to count inside the FileDataStructure"""
         self.log_path = ".\\results\\" + type(file_data_structure).__name__
-        for var_name in self.logged_var:
-            var_seq = var_name.split(".")
-            look_for_value(var_seq[1:], file_data_structure, var_name, self.logged_var)
+        for var_name, dict_values in self.logged_var.items():
+            var_seq = var_name.split(".")[1:]
+            last = [file_data_structure]
+            for seq in var_seq:
+                match = re.search(r"\[\d+\]", seq)
+                if match:
+                    index = int(seq[match.span()[0] + 1 : match.span()[1] - 1])
+                else:
+                    index = None
+
+                for obj in last:
+                    if not index is None:
+                        curr = getattr(obj, seq[: match.span()[0]])[index]
+                    else:
+                        curr = getattr(obj, seq)
+
+                    if isinstance(curr, List):
+                        new_last = curr
+                        value = len(curr)
+                    else:
+                        new_last = [curr]
+                        value = curr
+
+                    if seq in var_seq[-1]:
+                        if value in dict_values.keys():
+                            dict_values[value] += 1
+                        else:
+                            dict_values[value] = 1
+
+                last = new_last
 
     def write_log(self) -> None:
         """Write the compiled info in the ./resulsts folder"""
@@ -97,7 +78,11 @@ class ValueRangeLogger:
                 os.mkdir(path_to_csv)
             file_name = re.sub(r"\.", "_", var_name)
             path_to_csv += file_name + ".csv"
-            values.to_csv(path_to_csv)
+            temp_dict = {
+                "Value": list(values.keys()),
+                "Count": list(values.values()),
+            }
+            DataFrame(temp_dict).to_csv(path_to_csv)
 
         with open(
             self.log_path + "\\readFiles.txt", "wt", encoding="utf-8"
