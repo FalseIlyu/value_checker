@@ -22,10 +22,13 @@ if __name__ == "__main__":
                 try:
                     with open(file_path, "rb") as reader:
                         file_data_structure = data_type(reader)
-                        value_logger.update(file_data_structure)
-                        value_logger.file_read(file_path)
                 except ValueError:
                     value_logger.file_not_read(file_path)
+                    continue
+
+                value_logger.file_read(file_path)
+                try:
+                    value_logger.update(file_data_structure)
                 except IndexError:
                     continue
 

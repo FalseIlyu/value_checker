@@ -40,17 +40,22 @@ class ValueRangeLogger:
             var_seq = var_name.split(".")[1:]
             last = [file_data_structure]
             for seq in var_seq:
-                match = re.search(r"\[\d+\]", seq)
-                if match:
-                    index = int(seq[match.span()[0] + 1 : match.span()[1] - 1])
-                else:
-                    index = None
+                matches = re.findall(r"\[(\d+)(\:\d)?\]", seq)
+                end = re.search(r"\[", seq)
+                if end:
+                    end = end.span()[0]
+                indexes = [
+                    (int(match[0]), int(match[1][1:])) if match[1] else (int(match[0]),)
+                    for match in matches
+                ]
 
                 for obj in last:
-                    if not index is None:
-                        curr = getattr(obj, seq[: match.span()[0]])[index]
-                    else:
-                        curr = getattr(obj, seq)
+                    curr = getattr(obj, seq[:end])
+                    for index in indexes:
+                        if len(index) > 1:
+                            curr = curr[index[0] : index[1]]
+                        else:
+                            curr = curr[index[0]]
 
                     if isinstance(curr, List):
                         new_last = curr
@@ -77,12 +82,14 @@ class ValueRangeLogger:
             if not path.exists(path_to_csv):
                 os.mkdir(path_to_csv)
             file_name = re.sub(r"\.", "_", var_name)
+            file_name = re.sub(r"\:", "to", var_name)
             path_to_csv += file_name + ".csv"
             temp_dict = {
                 "Value": list(values.keys()),
                 "Count": list(values.values()),
             }
-            DataFrame(temp_dict).to_csv(path_to_csv)
+            with open(path_to_csv, "wb") as writer:
+                DataFrame(temp_dict).to_csv(writer)
 
         with open(
             self.log_path + "\\readFiles.txt", "wt", encoding="utf-8"
