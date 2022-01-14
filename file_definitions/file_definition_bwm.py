@@ -80,7 +80,7 @@ class BWMHeader:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.fileIdentifier = (reader.read(40)).decode("utf-8")  # 0x00
+            self.fileIdentifier = (reader.read(40)).decode("utf-8").replace("\0","")  # 0x00
             if "LiOnHeAdMODEL" not in self.fileIdentifier:
                 raise ValueError(
                     "This is not a valid .bwm file (magic string mismatch)."
@@ -141,13 +141,13 @@ class MaterialDefinition:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.diffuseMap = reader.read(64).decode("utf-8")
-            self.lightMap = reader.read(64).decode("utf-8")
-            self.unknown1 = reader.read(64).decode("utf-8")
-            self.specularMap = reader.read(64).decode("utf-8")
-            self.unknown2 = reader.read(64).decode("utf-8")
-            self.normalMap = reader.read(64).decode("utf-8")
-            self.type = reader.read(64).decode("utf-8")
+            self.diffuseMap = reader.read(64).decode("utf-8").replace("\0","")
+            self.lightMap = reader.read(64).decode("utf-8").replace("\0","")
+            self.unknown1 = reader.read(64).decode("utf-8").replace("\0","")
+            self.specularMap = reader.read(64).decode("utf-8").replace("\0","")
+            self.unknown2 = reader.read(64).decode("utf-8").replace("\0","")
+            self.normalMap = reader.read(64).decode("utf-8").replace("\0","")
+            self.type = reader.read(64).decode("utf-8").replace("\0","")
             return
 
 
@@ -173,7 +173,7 @@ class MeshDescription:
             self.materialRefsCount = read_int32(reader)
             self.u2 = read_int32(reader)
             self.id = read_int32(reader)
-            self.name = reader.read(64).decode("utf-8")
+            self.name = reader.read(64).decode("utf-8").replace("\0","")
             reader.read(8)
 
             self.materialRefs: List[MaterialRef] = []
@@ -224,7 +224,7 @@ class Entity:
             self.axis2 = (read_float(reader), read_float(reader), read_float(reader))
             self.axis3 = (read_float(reader), read_float(reader), read_float(reader))
             self.position = (read_float(reader), read_float(reader), read_float(reader))
-            self.name = reader.read(256).decode("utf-8")
+            self.name = reader.read(256).decode("utf-8").replace("\0","")
             return
 
 
