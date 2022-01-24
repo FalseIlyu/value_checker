@@ -4,7 +4,7 @@ from io import BufferedReader
 from typing import List
 import struct
 
-from file_definitions.file_definition_utilities import (
+from operators_bwm.file_definition_utilities import (
     read_float,
     read_int16,
     read_int32,
@@ -108,15 +108,15 @@ class LionheadModelHeader:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.unknown1 = tuple(read_int32(reader) for i in range(3))
-            self.unknown_int1 = read_int32(
-                reader
-            )  # Must be != 0 for the model to show ingame
-            self.unknown2 = tuple(read_int32(reader) for i in range(10))
-            self.unknown_int2 = read_int32(
-                reader
-            )  # Snappin related value (maybe distance)
-            self.unknown3 = tuple(read_int32(reader) for i in range(2))
+            self.unknown1 = read_float(reader)
+            self.pnt = tuple(read_float(reader) for i in range(3))
+            self.box1 = tuple(read_float(reader) for i in range(3))
+            self.box2 = tuple(read_float(reader) for i in range(3))
+            self.cent = tuple(read_float(reader) for i in range(3))
+            self.height = read_float(reader)
+            self.radius = read_float(reader)  # Snappin related value (maybe distance)
+            self.unknown2 = read_float(reader)
+            self.volume = read_float(reader)
 
             self.materialDefinitionCount = read_int32(reader)  # 0x7C
             self.meshDescriptionCount = read_int32(reader)  # 0X80
@@ -125,7 +125,7 @@ class LionheadModelHeader:
             self.unknownCount1 = read_int32(reader)  # 0x8C
             self.collisionPointCount = read_int32(reader)  # 0x90
 
-            self.unknown2 = tuple(read_int32(reader) for i in range(5))
+            self.unknowns2 = tuple(read_float(reader) for i in range(5))
 
             self.vertexCount = read_int32(reader)  # 0xA8
             self.strideCount = read_int32(reader)  # 0xAC
@@ -143,9 +143,9 @@ class MaterialDefinition:
         if reader:
             self.diffuseMap = reader.read(64).decode("utf-8").replace("\0","")
             self.lightMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.unknown1 = reader.read(64).decode("utf-8").replace("\0","")
+            self.growthMap = reader.read(64).decode("utf-8").replace("\0","")
             self.specularMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.unknown2 = reader.read(64).decode("utf-8").replace("\0","")
+            self.animatedTexture = reader.read(64).decode("utf-8").replace("\0","")
             self.normalMap = reader.read(64).decode("utf-8").replace("\0","")
             self.type = reader.read(64).decode("utf-8").replace("\0","")
             return
@@ -163,13 +163,18 @@ class MeshDescription:
             self.indiciesSize = read_int32(reader)
             self.vertexOffset = read_int32(reader)
             self.vertexSize = read_int32(reader)
+
             self.axis1 = struct.unpack("<fff", reader.read(12))
             self.axis2 = struct.unpack("<fff", reader.read(12))
             self.axis3 = struct.unpack("<fff", reader.read(12))
             self.position = struct.unpack("<fff", reader.read(12))
-            self.unknown1 = reader.read(60)
+            
+            self.unknowns1 = [read_float(reader) for i in range(4)]
+            self.box1 = [read_float(reader) for i in range(3)]
+            self.box2 = [read_float(reader) for i in range(3)]
+            self.unknowns2 = [read_float(reader) for i in range(5) ]
             self.unknown_int = read_int32(reader)
-            self.unknown2 = reader.read(4)
+            self.bbox_volume = read_float(reader)
             self.materialRefsCount = read_int32(reader)
             self.u2 = read_int32(reader)
             self.id = read_int32(reader)
@@ -300,11 +305,12 @@ class Vertex:
             return
 
 def main():
-    with open(
-        "G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekstoragepit.bwm",
-        "rb",
-    ) as testBWM:
-        file = BWMFile(testBWM)
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekaltar.bwm"):
+        with open(filepath, "rb") as testBWM:
+            file = BWMFile(testBWM)
+            stopgap = 0
+
+    return
 
 if __name__ == "__main__":
 
