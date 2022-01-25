@@ -1,6 +1,7 @@
 # coding=utf-8
 """Module containing function generally usefull to parsing binary files"""
-from io import BufferedReader
+from io import BufferedReader, BufferedWriter
+from typing import Iterable
 import struct
 
 def read_float(reader: BufferedReader) -> float:

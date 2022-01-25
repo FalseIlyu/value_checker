@@ -1,10 +1,7 @@
 # coding=utf-8
 """ Reader for a .bwm file """
-from asyncore import write
-from csv import writer
-from ensurepip import version
 from io import BufferedReader, BufferedWriter
-from typing import Iterable, List
+from typing import List
 from glob import glob
 import struct
 
