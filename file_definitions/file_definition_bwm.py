@@ -31,10 +31,6 @@ class BWMFile:
             MaterialDefinition(reader)
             for i in range(self.modelHeader.materialDefinitionCount)
         ]
-        self.materialDefinitions = [
-            MaterialDefinition()
-            for i in range(self.modelHeader.materialDefinitionCount)
-        ]
         self.meshDescriptions = [
             MeshDescription(reader)
             for i in range(self.modelHeader.meshDescriptionCount)
@@ -561,7 +557,7 @@ class Vertex:
 def main():
     for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekaltar.bwm"):
         with open(filepath, "rb") as testBWM:
-            file = BWMFile()
+            file = BWMFile(testBWM)
             file.write("./m_greekaltar.bwm")
     return
 
