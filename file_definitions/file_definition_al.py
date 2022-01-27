@@ -1,10 +1,7 @@
 # coding=utf-8
 
-from asyncore import read
-from email import header
 from glob import glob
 from io import BufferedReader
-from os import name
 
 from numpy import single
 from file_definition_utilities import (
