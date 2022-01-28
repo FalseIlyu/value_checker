@@ -3,9 +3,7 @@
 from asyncore import read
 from glob import glob
 from io import BufferedReader
-from matplotlib.pyplot import bone
 
-from numpy import single
 from file_definition_utilities import (
     read_float,
     read_int16,
@@ -18,7 +16,23 @@ class AlFile:
         if reader:
             self.header = AlHeader(reader)
             self.skeleton = Skeleton(reader, self.header.animationMetadataOffset)
-            self.animation = [AnimationMetadata(reader) for i in range(self.header.animationMetadataCount)]
+            self.animationMetadataArray = [
+                AnimationMetadata(reader) 
+                for i in range(self.header.animationCount)
+                ]
+            size = [
+                self.animationMetadataArray[i+1].animationOffset 
+                for i in range(self.header.animationCount - 1) 
+                ]
+            size.append(self.header.size + 0x60)
+            size = [
+                size[i] - self.animationMetadataArray[i].animationOffset 
+                for i in range(len(size))
+                ]
+            self.animationDataArray = [
+                AnimationData(reader, size[i]) 
+                for i in range(self.header.animationCount)
+                ]
             return
         else:
             raise ValueError("Need a valid BufferedReader")
@@ -36,7 +50,7 @@ class AlHeader:
             self.animationMetadataOffset = read_int32(reader)
             self.size = read_int32(reader)
             self.animationDataOffset = read_int32(reader)
-            self.animationMetadataCount = read_int32(reader)
+            self.animationCount = read_int32(reader)
             self.unknowns2 = [read_int32(reader) for i in range(2)]
             return
         else:
@@ -63,24 +77,44 @@ class AlBone:
         if reader:
             self.name = reader.read(0x20).decode("utf-8").replace("\0", "")
             self.parent = read_int32(reader, signed=True)
+            return
         else:
             raise ValueError("Need a valid BufferedReader")
 
 class AnimationMetadata:
     """
-    Maybe metadata on an animation
+    Maybe metadata of an animation
     Size : 0x94
     """
     def __init__(self, reader: BufferedReader) -> None:
         if reader:
             self.unknowns1 = [read_int32(reader) for i in range(2)]
             self.name = reader.read(0x40).decode("utf-8").replace("\0", "")
-            self.unknowns2 = [read_int32(reader) for i in range(7)]
+            self.unknowns2 = [read_int32(reader) for i in range(6)]
+            self.boneCount = read_int32(reader)
             self.unknowns3 = [read_int32(reader) for i in range(11)]
             self.animationOffset = read_int32(reader)
+            return
         else:
             raise ValueError("Need a valid BufferedReader")
-        pass
+
+class AnimationData:
+    """
+    Maybe binary data of an animation
+    Size : 0x4C + ???
+    """
+    def __init__(self, reader: BufferedReader, size: int) -> None:
+        if reader:
+            self.unknowns1 = [read_int32(reader) for i in range(2)]
+            self.name = reader.read(0x40).decode("utf-8").replace("\0", "")
+            self.unknown1 = read_int32(reader)
+            self.unknowns2 = reader.read(0x14)
+            self.boneCount = read_int32(reader)
+            self.unknowns3 = [read_int32(reader) for i in range(11)]
+            self.unknownsData = reader.read(size - 0x90)
+            return
+        else:
+            raise ValueError("Need a valid BufferedReader")
 
 def main():
     for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\**\\**.al"):
