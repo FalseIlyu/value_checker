@@ -1,6 +1,5 @@
 # coding=utf-8
 
-from asyncore import read
 from glob import glob
 from io import BufferedReader
 
@@ -101,16 +100,17 @@ class AnimationMetadata:
 class AnimationData:
     """
     Maybe binary data of an animation
-    Size : 0x4C + ???
+    Size : 0x90 + ???
     """
     def __init__(self, reader: BufferedReader, size: int) -> None:
         if reader:
             self.unknowns1 = [read_int32(reader) for i in range(2)]
             self.name = reader.read(0x40).decode("utf-8").replace("\0", "")
             self.unknown1 = read_int32(reader)
-            self.unknowns2 = reader.read(0x14)
+            self.unknowns2 = [read_int32(reader) for i in range(5)]
             self.boneCount = read_int32(reader)
             self.unknowns3 = [read_int32(reader) for i in range(11)]
+            self.size = size - 0x90 - self.unknowns2[2]
             self.unknownsData = reader.read(size - 0x90)
             return
         else:
