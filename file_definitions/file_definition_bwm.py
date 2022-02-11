@@ -7,7 +7,7 @@ import struct
 
 from numpy import mat
 
-from file_definitions.file_definition_utilities import (
+from file_definition_utilities import (
     read_float,
     read_int16,
     read_int32,
@@ -123,8 +123,10 @@ class BWMFile:
             stride.write(writer)
         for vertex in self.vertices:
             vertex.write(writer)
-        for data in self.data:
-            writer.write(data)
+        for (stride, data) in zip(self.strides[1:],self.data):
+            stride.write_data(writer, data)
+        #for data in self.data:
+        #    writer.write(data)
         for indice in self.indexes:
             write_int16(writer, indice)
         if self.fileHeader.version > 5:
@@ -422,10 +424,10 @@ class Bone:
             return
 
     def write(self, writer:BufferedWriter = None):
-        write_vector(writer, self.axis1, read_float)
-        write_vector(writer, self.axis2, read_float)
-        write_vector(writer, self.axis3, read_float)
-        write_vector(writer, self.position, read_float)
+        write_vector(writer, self.axis1, write_float)
+        write_vector(writer, self.axis2, write_float)
+        write_vector(writer, self.axis3, write_float)
+        write_vector(writer, self.position, write_float)
 
 class Entity:
     """
@@ -511,13 +513,43 @@ class Stride:
             self.unknown = bytes([0 for i in range(size)])
 
     def read_data(self, reader: BufferedReader):
-        return reader.read(self.stride)
+        stride_format = [4, 8, 12, 4, 1]
+        data = []
+        for (_, sSize) in self.idSizes:
+            if sSize == 3 or sSize == 4:
+                data.append(int.from_bytes(reader.read(stride_format[sSize]), byteorder="little"))
+            elif sSize == 0:
+                data.append(read_float(reader))
+            else:
+                vector_size = int(stride_format[sSize]/3)
+                data.append([read_int32(reader) for i in range(vector_size)])
+        return data
 
     def write(self, writer: BufferedWriter):
         write_int32(writer, self.count)
         for idSize in self.idSizes:
             write_vector(writer, idSize, write_int32)
         writer.write(self.unknown)
+
+    def write_data(self, writer: BufferedWriter, data: List[List]):
+        stride_format = [4, 8, 12, 4, 1]
+        for stride_data in data:
+            i = 0
+            for (_, sSize) in self.idSizes:
+                if sSize  == 4:
+                    writer.write(
+                        stride_data[i].to_bytes(
+                            1, 
+                            byteorder="little", 
+                            signed = False)
+                        )
+                elif sSize == 3:
+                    write_int32(writer, stride_data[i])
+                elif sSize == 0:
+                    write_float(writer, stride_data[i])
+                else:
+                    write_vector(writer, stride_data[i], write_int32)
+                i += 1
 
 class Vertex:
     """
@@ -555,10 +587,10 @@ class Vertex:
             write_vector(writer, uv, write_float)
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekaltar.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\s_dove.bwm"):
         with open(filepath, "rb") as testBWM:
             file = BWMFile(testBWM)
-            file.write("./m_greekaltar.bwm")
+            file.write("./s_dove.bwm")
     return
 
 if __name__ == "__main__":
