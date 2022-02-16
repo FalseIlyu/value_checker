@@ -5,9 +5,7 @@ from typing import List
 from glob import glob
 import struct
 
-from numpy import mat
-
-from file_definition_utilities import (
+from file_definitions.file_definition_utilities import (
     read_float,
     read_int16,
     read_int32,
@@ -106,6 +104,7 @@ class BWMFile:
         for materialDefinition in self.materialDefinitions:
             materialDefinition.write(writer)
         materialRefs = []
+        # self.meshDescriptions.sort(key = lambda x: x.id)
         for meshDescription in self.meshDescriptions:
             meshDescription.write(writer)
             materialRefs.extend(meshDescription.materialRefs)
@@ -192,7 +191,7 @@ class LionheadModelHeader:
             self.cent = tuple(read_float(reader) for i in range(3))
             self.height = read_float(reader)
             self.radius = read_float(reader)  # Snappin related value (maybe distance)
-            self.unknown2 = read_float(reader)
+            self.unknown2 = read_int32(reader)
             self.volume = read_float(reader)
 
             self.materialDefinitionCount = read_int32(reader)  # 0x7C
@@ -202,7 +201,9 @@ class LionheadModelHeader:
             self.unknownCount1 = read_int32(reader)  # 0x8C
             self.collisionPointCount = read_int32(reader)  # 0x90
 
-            self.unknowns2 = tuple(read_float(reader) for i in range(5))
+            self.unknown3 = read_float(reader)
+            self.unknowns2 = tuple(read_float(reader) for i in range(3))
+            self.unknown4 = read_float(reader)
 
             self.vertexCount = read_int32(reader)  # 0xA8
             self.strideCount = read_int32(reader)  # 0xAC
@@ -244,7 +245,7 @@ class LionheadModelHeader:
         write_vector(writer, self.cent, write_float)
         write_float(writer, self.height)
         write_float(writer, self.radius)
-        write_float(writer, self.unknown2)
+        write_int32(writer, self.unknown2)
         write_float(writer, self.volume)
 
         write_int32(writer, self.materialDefinitionCount)
@@ -254,7 +255,10 @@ class LionheadModelHeader:
         write_int32(writer, self.unknownCount1)
         write_int32(writer, self.collisionPointCount)
 
+        write_float(writer, self.unknown3)
         write_vector(writer, self.unknowns2, write_float)
+        write_float(writer, self.unknown4)
+
         write_int32(writer, self.vertexCount)
         write_int32(writer, self.strideCount)
         write_int32(writer, self.type)
@@ -319,9 +323,9 @@ class MeshDescription:
             self.bbox_volume = read_float(reader)
             self.materialRefsCount = read_int32(reader)
             self.u2 = read_int32(reader)
-            self.id = read_int32(reader)
+            self.lod_level = read_int32(reader)
             self.name = reader.read(64).decode("utf-8").replace("\0","")
-            self.unknowns3 = [read_float(reader) for i in range(2)]
+            self.unknowns3 = [read_int32(reader) for i in range(2)]
             self.materialRefs: List[MaterialRef] = []
 
             return
@@ -345,7 +349,7 @@ class MeshDescription:
             self.bbox_volume = 0.0
             self.materialRefsCount = 1
             self.u2 = 0
-            self.id = 1
+            self.lod_level = 1
             self.name = ''
             self.unknowns3 = [0.0 for i in range(2)]
             self.materialRefs: List[MaterialRef] = []
@@ -370,9 +374,9 @@ class MeshDescription:
         write_float(writer, self.bbox_volume)
         write_int32(writer, self.materialRefsCount)
         write_int32(writer, self.u2)
-        write_int32(writer, self.id)
+        write_int32(writer, self.lod_level)
         write_str(writer, self.name, 64)
-        write_vector(writer, self.unknowns3, write_float)
+        write_vector(writer, self.unknowns3, write_int32)
 
 class MaterialRef:
     """
@@ -587,10 +591,10 @@ class Vertex:
             write_vector(writer, uv, write_float)
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\s_dove.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_*catapult*workshop*.bwm"):
         with open(filepath, "rb") as testBWM:
             file = BWMFile(testBWM)
-            file.write("./s_dove.bwm")
+            file.write(".\\" + filepath.split('\\')[-1])
     return
 
 if __name__ == "__main__":
