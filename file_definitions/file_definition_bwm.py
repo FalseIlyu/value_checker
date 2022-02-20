@@ -482,13 +482,13 @@ class collisionPoint:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.unknown = struct.unpack("<fff", reader.read(12))
+            self.position = struct.unpack("<fff", reader.read(12))
             return
         else:
-            self.unknown = (0.0, 0.0, 0.0)
+            self.position = (0.0, 0.0, 0.0)
 
     def write(self, writer:BufferedWriter = None):
-        write_vector(writer, self.unknown, write_float)
+        write_vector(writer, self.position, write_float)
 
 class Stride:
     """
@@ -591,7 +591,7 @@ class Vertex:
             write_vector(writer, uv, write_float)
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_*catapult*workshop*.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekshrine.bwm"):
         with open(filepath, "rb") as testBWM:
             file = BWMFile(testBWM)
             file.write(".\\" + filepath.split('\\')[-1])
