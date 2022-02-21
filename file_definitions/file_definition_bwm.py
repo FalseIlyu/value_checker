@@ -219,7 +219,7 @@ class LionheadModelHeader:
             self.cent = tuple(0.0 for i in range(3))
             self.height = 0.0
             self.radius = 0.0
-            self.unknown2 = 0.0
+            self.unknown2 = 0
             self.volume = 0.0
 
             self.materialDefinitionCount = 1
@@ -229,7 +229,9 @@ class LionheadModelHeader:
             self.unknownCount1 = 0
             self.collisionPointCount = 0
             
-            self.unknowns2 = tuple(0.0 for i in range(5))
+            self.unknown3 = 0.0
+            self.unknowns2 = tuple(0.0 for i in range(3))
+            self.unknown4 = 0.0
 
             self.vertexCount = 0
             self.strideCount = 1
@@ -315,10 +317,13 @@ class MeshDescription:
             self.axis3 = struct.unpack("<fff", reader.read(12))
             self.position = struct.unpack("<fff", reader.read(12))
             
-            self.unknowns1 = [read_float(reader) for i in range(4)]
+            self.cent = [read_float(reader) for i in range(3)]
+            self.radius = read_float(reader)
             self.box1 = [read_float(reader) for i in range(3)]
             self.box2 = [read_float(reader) for i in range(3)]
-            self.unknowns2 = [read_float(reader) for i in range(5) ]
+            self.unknowns1 = [read_float(reader) for i in range(3)]
+            self.height = read_float(reader)
+            self.unknown1 = read_float(reader)
             self.unknown_int = read_int32(reader)
             self.bbox_volume = read_float(reader)
             self.materialRefsCount = read_int32(reader)
@@ -341,10 +346,13 @@ class MeshDescription:
             self.axis3 = (0.0, 0.0, 0.0)
             self.position = [0.0 for i in range(3)]
             
-            self.unknowns1 = [0.0 for i in range(4)]
+            self.cent = [0.0 for i in range(3)]
+            self.radius = 0.0
             self.box1 = [0.0 for i in range(3)]
             self.box2 = [0.0 for i in range(3)]
-            self.unknowns2 = [0.0 for i in range(5) ]
+            self.unknowns1 = [0.0 for i in range(3)]
+            self.height = 0.0
+            self.unknown1 = 0.0
             self.unknown_int = 0
             self.bbox_volume = 0.0
             self.materialRefsCount = 1
@@ -366,17 +374,20 @@ class MeshDescription:
         write_vector(writer, self.axis3, write_float)
         write_vector(writer, self.position, write_float)
 
-        write_vector(writer, self.unknowns1, write_float)
+        write_vector(writer, self.cent, write_float)
+        write_float(writer, self.radius)
         write_vector(writer, self.box1, write_float)
         write_vector(writer, self.box2, write_float)
-        write_vector(writer, self.unknowns2, write_float)
+        write_vector(writer, self.unknowns1, write_float)
+        write_float(writer, self.height)
+        write_float(writer, self.unknown1)
         write_int32(writer, self.unknown_int)
         write_float(writer, self.bbox_volume)
         write_int32(writer, self.materialRefsCount)
         write_int32(writer, self.u2)
         write_int32(writer, self.lod_level)
         write_str(writer, self.name, 64)
-        write_vector(writer, self.unknowns3, write_int32)
+        write_vector(writer, self.unknowns3, write_float)
 
 class MaterialRef:
     """
@@ -591,7 +602,7 @@ class Vertex:
             write_vector(writer, uv, write_float)
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\m_greekshrine.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\*.bwm"):
         with open(filepath, "rb") as testBWM:
             file = BWMFile(testBWM)
             file.write(".\\" + filepath.split('\\')[-1])
