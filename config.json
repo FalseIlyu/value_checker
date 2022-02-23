@@ -4,7 +4,7 @@
             "files" : "G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\*\\*.bwm",
             "data_type" : "BWMFile",
             "var_to_check" : [
-                "self.modelHeader.meshDescriptionCount"
+                "self.modelHeader.modelCleaveCount"
             ]
         }
     ]

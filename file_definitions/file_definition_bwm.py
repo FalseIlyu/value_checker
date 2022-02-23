@@ -5,7 +5,7 @@ from typing import List
 from glob import glob
 import struct
 
-from file_definitions.file_definition_utilities import (
+from .file_definition_utilities import (
     read_float,
     read_int16,
     read_int32,
@@ -478,10 +478,10 @@ class Unknown1:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.unknown = struct.unpack("<fff", reader.read(12))
+            self.position = struct.unpack("<fff", reader.read(12))
             return
         else:
-            self.unknown = (0.0, 0.0, 0.0)
+            self.position = (0.0, 0.0, 0.0)
 
     def write(self, writer:BufferedWriter = None):
         write_vector(writer, self.unknown, write_float)
