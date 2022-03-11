@@ -16,6 +16,7 @@ from .file_definition_utilities import (
     write_vector
 )
 
+
 class BWMFile:
 
     """
@@ -48,7 +49,8 @@ class BWMFile:
             collisionPoint(reader)
             for i in range(self.modelHeader.collisionPointCount)
         ]
-        self.strides = [Stride(reader) for i in range(self.modelHeader.strideCount)]
+        self.strides = [Stride(reader)
+                        for i in range(self.modelHeader.strideCount)]
         self.vertices = [
             Vertex(self.strides[0], reader)
             for vertex in range(self.modelHeader.vertexCount)
@@ -80,7 +82,8 @@ class BWMFile:
             size += mesh_description.materialRefsCount * 0x20
         size += self.modelHeader.boneCount * 0x30
         size += self.modelHeader.entityCount * 0x130
-        size += (self.modelHeader.unknownCount1 + self.modelHeader.collisionPointCount) * 0xC
+        size += (self.modelHeader.unknownCount1 +
+                 self.modelHeader.collisionPointCount) * 0xC
         size += self.modelHeader.strideCount * 0x88
 
         return size
@@ -95,8 +98,8 @@ class BWMFile:
 
         return size
 
-    def write(self, filepath:str):
-        writer = open(filepath,"xb")
+    def write(self, filepath: str):
+        writer = open(filepath, "xb")
         self.fileHeader.size = self.size()
         self.fileHeader.metadataSize = self.metadataSize()
         self.fileHeader.write(writer)
@@ -122,9 +125,9 @@ class BWMFile:
             stride.write(writer)
         for vertex in self.vertices:
             vertex.write(writer)
-        for (stride, data) in zip(self.strides[1:],self.data):
+        for (stride, data) in zip(self.strides[1:], self.data):
             stride.write_data(writer, data)
-        #for data in self.data:
+        # for data in self.data:
         #    writer.write(data)
         for indice in self.indexes:
             write_int16(writer, indice)
@@ -143,7 +146,8 @@ class BWMHeader:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.fileIdentifier = (reader.read(40)).decode("utf-8").replace("\0","")  # 0x00
+            self.fileIdentifier = (reader.read(40)).decode(
+                "utf-8").replace("\0", "")  # 0x00
             if "LiOnHeAdMODEL" not in self.fileIdentifier:
                 raise ValueError(
                     "This is not a valid .bwm file (magic string mismatch)."
@@ -167,13 +171,14 @@ class BWMHeader:
             self.version = 5
             self.metadataSize = 0
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         if writer:
             write_str(writer, self.fileIdentifier, 40)
             write_int32(writer, self.size)
             write_int32(writer, 0x2B00B1E5)
             write_int32(writer, self.version)
             write_int32(writer, self.metadataSize)
+
 
 class LionheadModelHeader:
     """
@@ -190,7 +195,8 @@ class LionheadModelHeader:
             self.box2 = tuple(read_float(reader) for i in range(3))
             self.cent = tuple(read_float(reader) for i in range(3))
             self.height = read_float(reader)
-            self.radius = read_float(reader)  # Snappin related value (maybe distance)
+            # Snappin related value (maybe distance)
+            self.radius = read_float(reader)
             self.unknown2 = read_int32(reader)
             self.volume = read_float(reader)
 
@@ -207,7 +213,8 @@ class LionheadModelHeader:
 
             self.vertexCount = read_int32(reader)  # 0xA8
             self.strideCount = read_int32(reader)  # 0xAC
-            self.type = read_int32(reader)  # 0xB0 Three for skins and two for the rest
+            # 0xB0 Three for skins and two for the rest
+            self.type = read_int32(reader)
             self.indexCount = read_int32(reader)  # 0xB4
             self.modelCleaveCount = 0
             return
@@ -228,7 +235,7 @@ class LionheadModelHeader:
             self.entityCount = 0
             self.unknownCount1 = 0
             self.collisionPointCount = 0
-            
+
             self.unknown3 = 0.0
             self.unknowns2 = tuple(0.0 for i in range(3))
             self.unknown4 = 0.0
@@ -238,8 +245,8 @@ class LionheadModelHeader:
             self.type = 2
             self.indexCount = 0
             self.modelCleaveCount = 0
-    
-    def write(self, writer:BufferedWriter):
+
+    def write(self, writer: BufferedWriter):
         write_float(writer, self.unknown1)
         write_vector(writer, self.pnt, write_float)
         write_vector(writer, self.box1, write_float)
@@ -266,6 +273,7 @@ class LionheadModelHeader:
         write_int32(writer, self.type)
         write_int32(writer, self.indexCount)
 
+
 class MaterialDefinition:
     """
     '  Size    :   0x1C0
@@ -273,13 +281,15 @@ class MaterialDefinition:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.diffuseMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.lightMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.growthMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.specularMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.animatedTexture = reader.read(64).decode("utf-8").replace("\0","")
-            self.normalMap = reader.read(64).decode("utf-8").replace("\0","")
-            self.type = reader.read(64).decode("utf-8").replace("\0","")
+            self.diffuseMap = reader.read(64).decode("utf-8").replace("\0", "")
+            self.lightMap = reader.read(64).decode("utf-8").replace("\0", "")
+            self.growthMap = reader.read(64).decode("utf-8").replace("\0", "")
+            self.specularMap = reader.read(
+                64).decode("utf-8").replace("\0", "")
+            self.animatedTexture = reader.read(
+                64).decode("utf-8").replace("\0", "")
+            self.normalMap = reader.read(64).decode("utf-8").replace("\0", "")
+            self.type = reader.read(64).decode("utf-8").replace("\0", "")
             return
         else:
             self.diffuseMap = ""
@@ -290,7 +300,7 @@ class MaterialDefinition:
             self.normalMap = ""
             self.type = ""
 
-    def write(self, writer:BufferedWriter):
+    def write(self, writer: BufferedWriter):
         write_str(writer, self.diffuseMap, 64)
         write_str(writer, self.lightMap, 64)
         write_str(writer, self.growthMap, 64)
@@ -298,6 +308,7 @@ class MaterialDefinition:
         write_str(writer, self.animatedTexture, 64)
         write_str(writer, self.normalMap, 64)
         write_str(writer, self.type, 64)
+
 
 class MeshDescription:
     """
@@ -316,7 +327,7 @@ class MeshDescription:
             self.axis2 = struct.unpack("<fff", reader.read(12))
             self.axis3 = struct.unpack("<fff", reader.read(12))
             self.position = struct.unpack("<fff", reader.read(12))
-            
+
             self.cent = [read_float(reader) for i in range(3)]
             self.radius = read_float(reader)
             self.box1 = [read_float(reader) for i in range(3)]
@@ -329,7 +340,7 @@ class MeshDescription:
             self.materialRefsCount = read_int32(reader)
             self.u2 = read_int32(reader)
             self.lod_level = read_int32(reader)
-            self.name = reader.read(64).decode("utf-8").replace("\0","")
+            self.name = reader.read(64).decode("utf-8").replace("\0", "")
             self.unknowns3 = [read_int32(reader) for i in range(2)]
             self.materialRefs: List[MaterialRef] = []
 
@@ -345,7 +356,7 @@ class MeshDescription:
             self.axis2 = (0.0, 0.0, 0.0)
             self.axis3 = (0.0, 0.0, 0.0)
             self.position = [0.0 for i in range(3)]
-            
+
             self.cent = [0.0 for i in range(3)]
             self.radius = 0.0
             self.box1 = [0.0 for i in range(3)]
@@ -359,10 +370,10 @@ class MeshDescription:
             self.u2 = 0
             self.lod_level = 1
             self.name = ''
-            self.unknowns3 = [0.0 for i in range(2)]
+            self.unknowns3 = [0 for i in range(2)]
             self.materialRefs: List[MaterialRef] = []
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_int32(writer, self.facesCount)
         write_int32(writer, self.indiciesOffset)
         write_int32(writer, self.indiciesSize)
@@ -387,7 +398,8 @@ class MeshDescription:
         write_int32(writer, self.u2)
         write_int32(writer, self.lod_level)
         write_str(writer, self.name, 64)
-        write_vector(writer, self.unknowns3, write_float)
+        write_vector(writer, self.unknowns3, write_int32)
+
 
 class MaterialRef:
     """
@@ -415,7 +427,7 @@ class MaterialRef:
             self.facesSize = 0
             self.unknown = 0.0
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_int32(writer, self.materialDefinition)
         write_int32(writer, self.indiciesOffset)
         write_int32(writer, self.indiciesSize)
@@ -425,6 +437,7 @@ class MaterialRef:
         write_int32(writer, self.facesSize)
         write_float(writer, self.unknown)
 
+
 class Bone:
     """
     '  Size    :   0x30
@@ -432,17 +445,22 @@ class Bone:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.axis1 = (read_float(reader), read_float(reader), read_float(reader))
-            self.axis2 = (read_float(reader), read_float(reader), read_float(reader))
-            self.axis3 = (read_float(reader), read_float(reader), read_float(reader))
-            self.position = (read_float(reader), read_float(reader), read_float(reader))
+            self.axis1 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.axis2 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.axis3 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.position = (read_float(reader), read_float(
+                reader), read_float(reader))
             return
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_vector(writer, self.axis1, write_float)
         write_vector(writer, self.axis2, write_float)
         write_vector(writer, self.axis3, write_float)
         write_vector(writer, self.position, write_float)
+
 
 class Entity:
     """
@@ -451,11 +469,15 @@ class Entity:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.axis1 = (read_float(reader), read_float(reader), read_float(reader))
-            self.axis2 = (read_float(reader), read_float(reader), read_float(reader))
-            self.axis3 = (read_float(reader), read_float(reader), read_float(reader))
-            self.position = (read_float(reader), read_float(reader), read_float(reader))
-            self.name = reader.read(256).decode("utf-8").replace("\0","")
+            self.axis1 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.axis2 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.axis3 = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.position = (read_float(reader), read_float(
+                reader), read_float(reader))
+            self.name = reader.read(256).decode("utf-8").replace("\0", "")
             return
         else:
             self.axis1 = (0.0, 0.0, 0.0)
@@ -464,12 +486,13 @@ class Entity:
             self.position = (0.0, 0.0, 0.0)
             self.name = ""
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_vector(writer, self.axis1, write_float)
         write_vector(writer, self.axis2, write_float)
         write_vector(writer, self.axis3, write_float)
         write_vector(writer, self.position, write_float)
         write_str(writer, self.name, 256)
+
 
 class Unknown1:
     """
@@ -478,13 +501,14 @@ class Unknown1:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.position = struct.unpack("<fff", reader.read(12))
+            self.unknown = struct.unpack("<fff", reader.read(12))
             return
         else:
-            self.position = (0.0, 0.0, 0.0)
+            self.unknown = (0.0, 0.0, 0.0)
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_vector(writer, self.unknown, write_float)
+
 
 class collisionPoint:
     """
@@ -498,8 +522,9 @@ class collisionPoint:
         else:
             self.position = (0.0, 0.0, 0.0)
 
-    def write(self, writer:BufferedWriter = None):
+    def write(self, writer: BufferedWriter = None):
         write_vector(writer, self.position, write_float)
+
 
 class Stride:
     """
@@ -512,7 +537,9 @@ class Stride:
         if reader:
             self.count = read_int32(reader)
             self.idSizes = [
-                (read_int32(reader), read_int32(reader)) for i in range(self.count)
+                (
+                    read_int32(reader), read_int32(reader)
+                ) for i in range(self.count)
             ]
             self.stride = 0
             for (_, ssize) in self.idSizes:
@@ -532,7 +559,8 @@ class Stride:
         data = []
         for (_, sSize) in self.idSizes:
             if sSize == 3 or sSize == 4:
-                data.append(int.from_bytes(reader.read(stride_format[sSize]), byteorder="little"))
+                data.append(int.from_bytes(reader.read(
+                    stride_format[sSize]), byteorder="little"))
             elif sSize == 0:
                 data.append(read_float(reader))
             else:
@@ -551,13 +579,13 @@ class Stride:
         for stride_data in data:
             i = 0
             for (_, sSize) in self.idSizes:
-                if sSize  == 4:
+                if sSize == 4:
                     writer.write(
                         stride_data[i].to_bytes(
-                            1, 
-                            byteorder="little", 
-                            signed = False)
-                        )
+                            1,
+                            byteorder="little",
+                            signed=False)
+                    )
                 elif sSize == 3:
                     write_int32(writer, stride_data[i])
                 elif sSize == 0:
@@ -565,6 +593,7 @@ class Stride:
                 else:
                     write_vector(writer, stride_data[i], write_int32)
                 i += 1
+
 
 class Vertex:
     """
@@ -601,12 +630,14 @@ class Vertex:
         for uv in self.uvs:
             write_vector(writer, uv, write_float)
 
+
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\*.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\**.bwm"):
         with open(filepath, "rb") as testBWM:
             file = BWMFile(testBWM)
             file.write(".\\" + filepath.split('\\')[-1])
     return
+
 
 if __name__ == "__main__":
 
