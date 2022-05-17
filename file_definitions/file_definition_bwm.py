@@ -295,7 +295,7 @@ class LionheadModelHeader:
 
         write_int32(writer, self.vertexCount)
         write_int32(writer, self.strideCount)
-        write_int32(writer, self.type)
+        write_int32(writer, self.type.value)
         write_int32(writer, self.indexCount)
 
 
@@ -592,6 +592,9 @@ class Stride:
                 data.append([read_float(reader) for i in range(vector_size)])
             else:
                 raise ValueError("This isn't a supported stride Datatype")
+
+        if len(data) > 1:
+            return data[0]
         return data
 
     def write(self, writer: BufferedWriter):
@@ -602,8 +605,8 @@ class Stride:
         writer.write(self.unknown)
 
     def write_data(self, writer: BufferedWriter, data: List[List]):
-        for i, stride_data in enumerate(data):
-            for (_, sSize) in self.idSizes:
+        for stride_data in data:
+            for i, (_, sSize) in enumerate(self.idSizes):
                 if sSize == StrideSize.BYTE:
                     writer.write(
                         stride_data[i].to_bytes(
@@ -662,13 +665,12 @@ class Vertex:
 
 
 def main():
-    for filepath in glob("""G:\\Lionhead Studios\\Black & White 2\\Data\\
-            Art\\skins\\**.bwm"""):
+    for filepath in glob("""G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\**.bwm"""):
 
         with open(filepath, "rb") as testBWM:
             try:
                 file = BWMFile(testBWM)
-                # file.write(".\\" + filepath.split('\\')[-1])
+                file.write(".\\" + filepath.split('\\')[-1])
             except ValueError:
                 continue
     return
