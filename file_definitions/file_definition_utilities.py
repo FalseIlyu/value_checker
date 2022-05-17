@@ -27,11 +27,11 @@ def write_float(writer: BufferedWriter, float: float) -> None:
 
 
 def write_int16(writer: BufferedWriter, int: int, signed: bool = False) -> None:
-    writer.write(int.to_bytes(2, byteorder="little"), signed=signed)
+    writer.write(int.to_bytes(2, byteorder="little", signed=signed))
 
 
 def write_int32(writer: BufferedWriter, int: int, signed: bool = False) -> None:
-    writer.write(int.to_bytes(4, byteorder="little"), signed=signed)
+    writer.write(int.to_bytes(4, byteorder="little", signed=signed))
 
 
 def write_vector(writer: BufferedWriter, vector: Iterable, type_fun) -> None:

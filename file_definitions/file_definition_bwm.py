@@ -577,7 +577,7 @@ class Stride:
             self.idSizes = []
             self.stride = 0
             self.size = 0x88 - 4
-            self.unknown = bytes([0 for i in range(size)])
+            self.unknown = bytes([0 for i in range(self.size)])
 
     def read_data(self, reader: BufferedReader):
         data = []
@@ -596,8 +596,9 @@ class Stride:
 
     def write(self, writer: BufferedWriter):
         write_int32(writer, self.count)
-        for idSize in self.idSizes:
-            write_vector(writer, idSize, write_int32)
+        for sId, sSize in self.idSizes:
+            write_int32(writer, sId.value)
+            write_int32(writer, sSize.value)
         writer.write(self.unknown)
 
     def write_data(self, writer: BufferedWriter, data: List[List]):
