@@ -11,14 +11,14 @@ def read_float(reader: BufferedReader) -> float:
     return struct.unpack("<f", reader.read(4))[0]
 
 
-def read_int16(reader: BufferedReader) -> int:
+def read_int16(reader: BufferedReader, signed: bool = False) -> int:
     """Return the 2 next bytes in a file as an int"""
-    return int.from_bytes(reader.read(2), byteorder="little")
+    return int.from_bytes(reader.read(2), byteorder="little", signed=signed)
 
 
-def read_int32(reader: BufferedReader) -> int:
+def read_int32(reader: BufferedReader, signed: bool = False) -> int:
     """Return the 4 next bytes in a file as an int"""
-    return int.from_bytes(reader.read(4), byteorder="little")
+    return int.from_bytes(reader.read(4), byteorder="little", signed=signed)
 
 
 def write_float(writer: BufferedWriter, float: float) -> None:
@@ -26,12 +26,12 @@ def write_float(writer: BufferedWriter, float: float) -> None:
     writer.write(struct.pack("<f", float))
 
 
-def write_int16(writer: BufferedWriter, int: int) -> None:
-    writer.write(int.to_bytes(2, byteorder="little"))
+def write_int16(writer: BufferedWriter, int: int, signed: bool = False) -> None:
+    writer.write(int.to_bytes(2, byteorder="little"), signed=signed)
 
 
-def write_int32(writer: BufferedWriter, int: int) -> None:
-    writer.write(int.to_bytes(4, byteorder="little"))
+def write_int32(writer: BufferedWriter, int: int, signed: bool = False) -> None:
+    writer.write(int.to_bytes(4, byteorder="little"), signed=signed)
 
 
 def write_vector(writer: BufferedWriter, vector: Iterable, type_fun) -> None:
