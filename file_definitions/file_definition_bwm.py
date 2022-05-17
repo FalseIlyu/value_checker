@@ -1,8 +1,10 @@
+# <pep8-80 compliant>
 # coding=utf-8
-""" Reader for a .bwm file """
+""" Structures of a .bwm with associated IO """
 from io import BufferedReader, BufferedWriter
 from typing import List
 from glob import glob
+from enum import Enum
 import struct
 
 from .file_definition_utilities import (
@@ -17,6 +19,35 @@ from .file_definition_utilities import (
 )
 
 
+# Section for enumated type
+class FileType(Enum):
+    MODEL = 2
+    SKIN = 3
+
+
+class StrideSize(Enum):
+    FLOAT = 0
+    TUPLE = 1
+    POINT_3D = 2
+    INT = 3
+    BYTE = 4
+
+
+class StrideType(Enum):
+    POINT = 0
+    NORMAL = 1
+    UV_MAP = 2
+    BONE_INDEX = 6
+    BONE_WEIGHT = 7
+
+
+class UVType(Enum):
+    UV_TEXTURE = 0
+    UV_LIGTHMAP = 1
+    UV_ANIMATION = 2
+
+
+# Section for BWM file structure
 class BWMFile:
 
     """
@@ -46,7 +77,7 @@ class BWMFile:
             Unknown1(reader) for i in range(self.modelHeader.unknownCount1)
         ]
         self.collisionPoints = [
-            collisionPoint(reader)
+            CollisionPoint(reader)
             for i in range(self.modelHeader.collisionPointCount)
         ]
         self.strides = [Stride(reader)
@@ -214,7 +245,7 @@ class LionheadModelHeader:
             self.vertexCount = read_int32(reader)  # 0xA8
             self.strideCount = read_int32(reader)  # 0xAC
             # 0xB0 Three for skins and two for the rest
-            self.type = read_int32(reader)
+            self.type = FileType(read_int32(reader))
             self.indexCount = read_int32(reader)  # 0xB4
             self.modelCleaveCount = 0
             return
@@ -510,7 +541,7 @@ class Unknown1:
         write_vector(writer, self.unknown, write_float)
 
 
-class collisionPoint:
+class CollisionPoint:
     """
     '  Size    :   0x0C
     """
@@ -530,20 +561,20 @@ class Stride:
     """
     '  Size    :   0x88
     """
+    strideFormat = [4, 8, 12, 4, 1]
 
     def __init__(self, reader: BufferedReader = None):
-        stride_format = [4, 8, 12, 4, 1]
-        size = 0x88
         if reader:
             self.count = read_int32(reader)
             self.idSizes = [
                 (
-                    read_int32(reader), read_int32(reader)
+                    StrideType(read_int32(reader)),
+                    StrideSize(read_int32(reader))
                 ) for i in range(self.count)
             ]
             self.stride = 0
             for (_, ssize) in self.idSizes:
-                self.stride = self.stride + stride_format[ssize]
+                self.stride = self.stride + Stride.strideFormat[ssize.value]
             size = 0x88 - 4 - (8 * self.count)
             self.unknown = reader.read(size)
             return
@@ -555,17 +586,18 @@ class Stride:
             self.unknown = bytes([0 for i in range(size)])
 
     def read_data(self, reader: BufferedReader):
-        stride_format = [4, 8, 12, 4, 1]
         data = []
         for (_, sSize) in self.idSizes:
-            if sSize == 3 or sSize == 4:
+            if sSize == StrideSize.INT or sSize == StrideSize.BYTE:
                 data.append(int.from_bytes(reader.read(
-                    stride_format[sSize]), byteorder="little"))
-            elif sSize == 0:
+                    Stride.strideFormat[sSize.value]), byteorder="little"))
+            elif sSize == StrideSize.FLOAT:
                 data.append(read_float(reader))
+            elif sSize == StrideSize.POINT_3D or sSize == StrideSize.TUPLE:
+                vector_size = int(Stride.strideFormat[sSize.value]/4)
+                data.append([read_float(reader) for i in range(vector_size)])
             else:
-                vector_size = int(stride_format[sSize]/3)
-                data.append([read_int32(reader) for i in range(vector_size)])
+                raise ValueError("This isn't a supported stride Datatype")
         return data
 
     def write(self, writer: BufferedWriter):
@@ -575,24 +607,23 @@ class Stride:
         writer.write(self.unknown)
 
     def write_data(self, writer: BufferedWriter, data: List[List]):
-        stride_format = [4, 8, 12, 4, 1]
-        for stride_data in data:
-            i = 0
+        for i, stride_data in enumerate(data):
             for (_, sSize) in self.idSizes:
-                if sSize == 4:
+                if sSize == StrideSize.BYTE:
                     writer.write(
                         stride_data[i].to_bytes(
                             1,
                             byteorder="little",
                             signed=False)
                     )
-                elif sSize == 3:
+                elif sSize == StrideSize.INT:
                     write_int32(writer, stride_data[i])
-                elif sSize == 0:
+                elif sSize == StrideSize.FLOAT:
                     write_float(writer, stride_data[i])
-                else:
+                elif sSize == StrideSize.VECTOR or sSize == StrideSize.TUPLE:
                     write_vector(writer, stride_data[i], write_int32)
-                i += 1
+                else:
+                    raise ValueError("Not a supported stride Datatype")
 
 
 class Vertex:
@@ -604,20 +635,24 @@ class Vertex:
         if reader:
             self.uvs = []
             for (strideId, _) in stride.idSizes:
-                if strideId == 0:
+                if strideId == StrideType.POINT:
                     self.position = (
                         read_float(reader),
                         read_float(reader),
                         read_float(reader),
                     )
-                if strideId == 1:
+                elif strideId == StrideType.NORMAL:
                     self.normal = (
                         read_float(reader),
                         read_float(reader),
                         read_float(reader),
                     )
-                if strideId == 2:
+                elif strideId == StrideType.UV_MAP:
                     self.uvs.append((read_float(reader), read_float(reader)))
+                else:
+                    raise ValueError(
+                        f"This type is not usable for a Vertex {strideId.name}"
+                        )
             return
         else:
             self.uvs = []
@@ -632,10 +667,13 @@ class Vertex:
 
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\models\\**.bwm"):
+    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\**.bwm"):
         with open(filepath, "rb") as testBWM:
-            file = BWMFile(testBWM)
-            file.write(".\\" + filepath.split('\\')[-1])
+            try:
+                file = BWMFile(testBWM)
+                # file.write(".\\" + filepath.split('\\')[-1])
+            except Exception:
+                continue
     return
 
 
