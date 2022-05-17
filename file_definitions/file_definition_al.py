@@ -3,11 +3,10 @@
 from glob import glob
 from io import BufferedReader
 
-from .file_definition_utilities import (
-    read_float,
-    read_int16,
-    read_int32
-)
+if __name__ != "__main__":
+    from .file_definition_utilities import *
+else:
+    from file_definition_utilities import *
 
 
 class AlFile:

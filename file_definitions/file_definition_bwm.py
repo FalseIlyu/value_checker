@@ -7,16 +7,10 @@ from glob import glob
 from enum import Enum
 import struct
 
-from .file_definition_utilities import (
-    read_float,
-    read_int16,
-    read_int32,
-    write_float,
-    write_int16,
-    write_int32,
-    write_str,
-    write_vector
-)
+if __name__ != "__main__":
+    from .file_definition_utilities import *
+else:
+    from file_definition_utilities import *
 
 
 # Section for enumated type
@@ -667,12 +661,14 @@ class Vertex:
 
 
 def main():
-    for filepath in glob("G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\**.bwm"):
+    for filepath in glob("""G:\\Lionhead Studios\\Black & White 2\\Data\\
+            Art\\skins\\**.bwm"""):
+
         with open(filepath, "rb") as testBWM:
             try:
                 file = BWMFile(testBWM)
                 # file.write(".\\" + filepath.split('\\')[-1])
-            except Exception:
+            except ValueError:
                 continue
     return
 
