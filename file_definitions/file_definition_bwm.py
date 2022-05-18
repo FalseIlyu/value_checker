@@ -700,7 +700,7 @@ def main():
         os.mkdir(resultPath)
         allSame = True
 
-        for filePath in glob(f"{config['gamePath']}\\Data\\Art\\**\\s_bat.bwm"):
+        for filePath in glob(f"{config['gamePath']}\\{config['bwmsPath']}"):
             with open(filePath, "rb") as testBWM:
                 fileName = os.path.basename(filePath)
                 try:
@@ -713,8 +713,9 @@ def main():
                 resultFile = os.path.join(resultPath, fileName)
                 file.write(resultFile)
                 if not filecmp.cmp(filePath, resultFile):
-                    print(f"{Fore.YELLOW}Writing {fileName} back don't yield"
-                          f" an exact copy{Style.RESET_ALL}")
+                    print(f"{Fore.YELLOW}Writing"
+                          f"{Style.RESET_ALL} {fileName} {Fore.YELLOW}"
+                          f"back don't yield an exact copy{Style.RESET_ALL}")
                     allSame = False
                 os.remove(resultFile)
 
