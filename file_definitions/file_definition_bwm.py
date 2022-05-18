@@ -2,15 +2,21 @@
 # coding=utf-8
 """ Structures of a .bwm with associated IO """
 from io import BufferedReader, BufferedWriter
+from colorama import Fore, Style
 from typing import List
 from glob import glob
 from enum import Enum
 import struct
 
+from sympy import true
+
 if __name__ != "__main__":
     from .file_definition_utilities import *
 else:
     from file_definition_utilities import *
+    import filecmp
+    import json
+    import os
 
 
 # Section for enumated type
@@ -172,7 +178,7 @@ class BWMHeader:
     def __init__(self, reader: BufferedReader = None):
         if reader:
             self.fileIdentifier = (reader.read(40)).decode(
-                "utf-8").replace("\0", "")  # 0x00
+                ).replace("\0", "")  # 0x00
             if "LiOnHeAdMODEL" not in self.fileIdentifier:
                 raise ValueError(
                     "This is not a valid .bwm file (magic string mismatch)."
@@ -267,7 +273,7 @@ class LionheadModelHeader:
 
             self.vertexCount = 0
             self.strideCount = 1
-            self.type = 2
+            self.type = FileType.MODEL
             self.indexCount = 0
             self.modelCleaveCount = 0
 
@@ -306,15 +312,13 @@ class MaterialDefinition:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.diffuseMap = reader.read(64).decode("utf-8").replace("\0", "")
-            self.lightMap = reader.read(64).decode("utf-8").replace("\0", "")
-            self.growthMap = reader.read(64).decode("utf-8").replace("\0", "")
-            self.specularMap = reader.read(
-                64).decode("utf-8").replace("\0", "")
-            self.animatedTexture = reader.read(
-                64).decode("utf-8").replace("\0", "")
-            self.normalMap = reader.read(64).decode("utf-8").replace("\0", "")
-            self.type = reader.read(64).decode("utf-8").replace("\0", "")
+            self.diffuseMap = reader.read(64).decode().replace("\0", "")
+            self.lightMap = reader.read(64).decode().replace("\0", "")
+            self.growthMap = reader.read(64).decode().replace("\0", "")
+            self.specularMap = reader.read(64).decode().replace("\0", "")
+            self.animatedTexture = reader.read(64).decode().replace("\0", "")
+            self.normalMap = reader.read(64).decode().replace("\0", "")
+            self.type = reader.read(64).decode().replace("\0", "")
             return
         else:
             self.diffuseMap = ""
@@ -348,9 +352,9 @@ class MeshDescription:
             self.vertexOffset = read_int32(reader)
             self.vertexSize = read_int32(reader)
 
-            self.axis1 = struct.unpack("<fff", reader.read(12))
-            self.axis2 = struct.unpack("<fff", reader.read(12))
-            self.axis3 = struct.unpack("<fff", reader.read(12))
+            self.zaxis = struct.unpack("<fff", reader.read(12))
+            self.xaxis = struct.unpack("<fff", reader.read(12))
+            self.yaxis = struct.unpack("<fff", reader.read(12))
             self.position = struct.unpack("<fff", reader.read(12))
 
             self.cent = [read_float(reader) for i in range(3)]
@@ -365,7 +369,7 @@ class MeshDescription:
             self.materialRefsCount = read_int32(reader)
             self.u2 = read_int32(reader)
             self.lod_level = read_int32(reader)
-            self.name = reader.read(64).decode("utf-8").replace("\0", "")
+            self.name = reader.read(64).decode().replace("\0", "")
             self.unknowns3 = [read_int32(reader) for i in range(2)]
             self.materialRefs: List[MaterialRef] = []
 
@@ -377,9 +381,9 @@ class MeshDescription:
             self.vertexOffset = 0
             self.vertexSize = 0
 
-            self.axis1 = (0.0, 0.0, 0.0)
-            self.axis2 = (0.0, 0.0, 0.0)
-            self.axis3 = (0.0, 0.0, 0.0)
+            self.zaxis = (0.0, 0.0, 0.0)
+            self.xaxis = (0.0, 0.0, 0.0)
+            self.yaxis = (0.0, 0.0, 0.0)
             self.position = [0.0 for i in range(3)]
 
             self.cent = [0.0 for i in range(3)]
@@ -405,9 +409,9 @@ class MeshDescription:
         write_int32(writer, self.vertexOffset)
         write_int32(writer, self.vertexSize)
 
-        write_vector(writer, self.axis1, write_float)
-        write_vector(writer, self.axis2, write_float)
-        write_vector(writer, self.axis3, write_float)
+        write_vector(writer, self.zaxis, write_float)
+        write_vector(writer, self.xaxis, write_float)
+        write_vector(writer, self.yaxis, write_float)
         write_vector(writer, self.position, write_float)
 
         write_vector(writer, self.cent, write_float)
@@ -470,20 +474,28 @@ class Bone:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.axis1 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.axis2 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.axis3 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.position = (read_float(reader), read_float(
-                reader), read_float(reader))
+            self.zaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.xaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.yaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.position = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
             return
 
     def write(self, writer: BufferedWriter = None):
-        write_vector(writer, self.axis1, write_float)
-        write_vector(writer, self.axis2, write_float)
-        write_vector(writer, self.axis3, write_float)
+        write_vector(writer, self.zaxis, write_float)
+        write_vector(writer, self.xaxis, write_float)
+        write_vector(writer, self.yaxis, write_float)
         write_vector(writer, self.position, write_float)
 
 
@@ -494,27 +506,35 @@ class Entity:
 
     def __init__(self, reader: BufferedReader = None):
         if reader:
-            self.axis1 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.axis2 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.axis3 = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.position = (read_float(reader), read_float(
-                reader), read_float(reader))
-            self.name = reader.read(256).decode("utf-8").replace("\0", "")
+            self.zaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.xaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.yaxis = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.position = (
+                read_float(reader),
+                read_float(reader),
+                read_float(reader))
+            self.name = reader.read(256).decode().replace("\0", "")
             return
         else:
-            self.axis1 = (0.0, 0.0, 0.0)
-            self.axis2 = (0.0, 0.0, 0.0)
-            self.axis3 = (0.0, 0.0, 0.0)
+            self.zaxis = (0.0, 0.0, 0.0)
+            self.xaxis = (0.0, 0.0, 0.0)
+            self.yaxis = (0.0, 0.0, 0.0)
             self.position = (0.0, 0.0, 0.0)
             self.name = ""
 
     def write(self, writer: BufferedWriter = None):
-        write_vector(writer, self.axis1, write_float)
-        write_vector(writer, self.axis2, write_float)
-        write_vector(writer, self.axis3, write_float)
+        write_vector(writer, self.zaxis, write_float)
+        write_vector(writer, self.xaxis, write_float)
+        write_vector(writer, self.yaxis, write_float)
         write_vector(writer, self.position, write_float)
         write_str(writer, self.name, 256)
 
@@ -665,14 +685,51 @@ class Vertex:
 
 
 def main():
-    for filepath in glob("""G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\skins\\**.bwm"""):
+    localPath = os.path.dirname(os.path.abspath(__file__))
+    with open(os.path.join(localPath, "deftests_config.json")) as cfgFile:
+        config = json.load(cfgFile)
+    resultPath = os.path.join(localPath, "WriteBWM")
 
-        with open(filepath, "rb") as testBWM:
-            try:
-                file = BWMFile(testBWM)
-                file.write(".\\" + filepath.split('\\')[-1])
-            except ValueError:
-                continue
+    def clean_up():
+        for filePath in glob(f"{resultPath}\\**"):
+            os.remove(filePath)
+        os.rmdir(resultPath)
+    if os.path.exists(resultPath):
+        clean_up()
+    try:
+        os.mkdir(resultPath)
+        allSame = True
+
+        for filePath in glob(f"{config['gamePath']}\\Data\\Art\\**\\s_bat.bwm"):
+            with open(filePath, "rb") as testBWM:
+                fileName = os.path.basename(filePath)
+                try:
+                    file = BWMFile(testBWM)
+                except ValueError:
+                    print(f"{Fore.RED}Couldn't read{Style.RESET_ALL}"
+                          f" {fileName}")
+                    continue
+
+                resultFile = os.path.join(resultPath, fileName)
+                file.write(resultFile)
+                if not filecmp.cmp(filePath, resultFile):
+                    print(f"{Fore.YELLOW}Writing {fileName} back don't yield"
+                          f" an exact copy{Style.RESET_ALL}")
+                    allSame = False
+                os.remove(resultFile)
+
+        if allSame:
+            print(f"{Fore.GREEN}All files written are exact copies of their"
+                  f" original{Style.RESET_ALL}")
+        else:
+            print(f"{Fore.RED}Some written files aren't exact copie of their"
+                  f" original{Style.RESET_ALL}")
+
+        os.rmdir(resultPath)
+    except (KeyboardInterrupt, FileExistsError) as e:
+        clean_up()
+        print(e)
+
     return
 
 
