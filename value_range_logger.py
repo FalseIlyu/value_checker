@@ -43,15 +43,16 @@ class ValueRangeLogger:
             last = [file_data_structure]
 
             for seq in var_seq:
-                matches = re.findall(r"\[(\d+)(\:\d)?\]", seq)
+                matches = re.findall(r"\[(-?\d*)(\:?)(-?\d*)\]", seq)
                 end = re.search(r"\[", seq)
 
                 if end:
                     end = end.span()[0]
 
                 indexes = [
-                    (int(match[0]), int(match[1][1:]))
-                    if match[1] else (int(match[0]),)
+                    (int(match[0]), int(match[2])) if match[1] and match[2]
+                    else () if match[1]
+                    else (int(match[0]),)
                     for match in matches
                 ]
 
@@ -60,9 +61,11 @@ class ValueRangeLogger:
 
                     for index in indexes:
                         if len(index) > 1:
-                            curr = curr[index[0]: index[1]]
-                        else:
+                            curr = tuple(i for i in curr[index[0]: index[1]])
+                        elif len(index) > 0:
                             curr = curr[index[0]]
+                        else:
+                            curr = tuple(i for i in curr)
 
                     if isinstance(curr, List):
                         new_last = curr
