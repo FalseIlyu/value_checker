@@ -8,8 +8,6 @@ from glob import glob
 from enum import Enum
 import struct
 
-from sympy import true
-
 if __name__ != "__main__":
     from .file_definition_utilities import *
 else:

@@ -4,29 +4,8 @@
             "files" : "G:\\Lionhead Studios\\Black & White 2\\Data\\Art\\*\\*.al",
             "data_type" : "AlFile",
             "var_to_check" : [
-                "self.header.magicnumber1",
-                "self.header.magicnumber2",
-                "self.header.name",
-                "self.header.animationMetadataOffset",
-                "self.header.size",
-                "self.header.animationDataOffset",
-                "self.header.animationCount",
-                "self.header.unknowns2[0]",
-                "self.header.unknowns2[1]",
-                "self.animationDataArray.size",
-                "self.animationDataArray.unknowns2[0]",
-                "self.animationDataArray.unknowns2[1]",
-                "self.animationDataArray.unknowns2[2]",
-                "self.animationDataArray.unknowns3[1]",
-                "self.animationDataArray.unknowns3[2]",
-                "self.animationDataArray.unknowns3[3]",
-                "self.animationDataArray.unknowns3[4]",
-                "self.animationDataArray.unknowns3[5]",
-                "self.animationDataArray.unknowns3[6]",
-                "self.animationDataArray.unknowns3[7]",
-                "self.animationDataArray.unknowns3[8]",
-                "self.animationDataArray.unknowns3[9]",
-                "self.animationDataArray.unknowns3[10]"
+                "self.header.unknowns2[:]",
+                "self.animationDataArray.animationInfo.unknowns1[:]"
             ]
         }
     ]
