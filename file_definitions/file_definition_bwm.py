@@ -128,42 +128,42 @@ class BWMFile:
         return size
 
     def write(self, filepath: str):
-        writer = open(filepath, "xb")
-        self.fileHeader.size = self.size()
-        self.fileHeader.metadataSize = self.metadataSize()
-        self.fileHeader.write(writer)
-        self.modelHeader.write(writer)
-        for materialDefinition in self.materialDefinitions:
-            materialDefinition.write(writer)
-        materialRefs = []
-        # self.meshDescriptions.sort(key = lambda x: x.id)
-        for meshDescription in self.meshDescriptions:
-            meshDescription.write(writer)
-            materialRefs.extend(meshDescription.materialRefs)
-        for materialRef in materialRefs:
-            materialRef.write(writer)
-        for bone in self.bones:
-            bone.write(writer)
-        for entity in self.entities:
-            entity.write(writer)
-        for unknown1 in self.unknowns1:
-            unknown1.write(writer)
-        for collisionPoint in self.collisionPoints:
-            collisionPoint.write(writer)
-        for stride in self.strides:
-            stride.write(writer)
-        for vertex in self.vertices:
-            vertex.write(writer)
-        for (stride, data) in zip(self.strides[1:], self.data):
-            stride.write_data(writer, data)
-        # for data in self.data:
-        #    writer.write(data)
-        for indice in self.indexes:
-            write_int16(writer, indice)
-        if self.fileHeader.version > 5:
-            write_int32(writer, self.modelHeader.modelCleaveCount)
-            for modelCleave in self.modelCleaves:
-                write_vector(writer, modelCleave, write_float)
+        with open(filepath, "xb") as writer:
+            self.fileHeader.size = self.size()
+            self.fileHeader.metadataSize = self.metadataSize()
+            self.fileHeader.write(writer)
+            self.modelHeader.write(writer)
+            for materialDefinition in self.materialDefinitions:
+                materialDefinition.write(writer)
+            materialRefs = []
+            # self.meshDescriptions.sort(key = lambda x: x.id)
+            for meshDescription in self.meshDescriptions:
+                meshDescription.write(writer)
+                materialRefs.extend(meshDescription.materialRefs)
+            for materialRef in materialRefs:
+                materialRef.write(writer)
+            for bone in self.bones:
+                bone.write(writer)
+            for entity in self.entities:
+                entity.write(writer)
+            for unknown1 in self.unknowns1:
+                unknown1.write(writer)
+            for collisionPoint in self.collisionPoints:
+                collisionPoint.write(writer)
+            for stride in self.strides:
+                stride.write(writer)
+            for vertex in self.vertices:
+                vertex.write(writer)
+            for (stride, data) in zip(self.strides[1:], self.data):
+                stride.write_data(writer, data)
+            # for data in self.data:
+            #    writer.write(data)
+            for indice in self.indexes:
+                write_int16(writer, indice)
+            if self.fileHeader.version > 5:
+                write_int32(writer, self.modelHeader.modelCleaveCount)
+                for modelCleave in self.modelCleaves:
+                    write_vector(writer, modelCleave, write_float)
 
 
 class BWMHeader:
