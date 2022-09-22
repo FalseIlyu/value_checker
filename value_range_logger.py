@@ -67,20 +67,22 @@ class ValueRangeLogger:
                         else:
                             curr = tuple(i for i in curr)
 
+                    new_last = last.copy()
+
                     if isinstance(curr, List):
-                        new_last = curr
+                        new_last.extend(curr)
                         value = len(curr)
                     else:
-                        new_last = [curr]
+                        new_last.extend([curr])
                         value = curr
+
+                    last = new_last[1:]
 
                     if seq in var_seq[-1]:
                         if value in dict_values.keys():
                             dict_values[value] += 1
                         else:
                             dict_values[value] = 1
-
-                last = new_last
 
     def write_log(self) -> None:
         """Write the compiled info in the ./resulsts folder"""
