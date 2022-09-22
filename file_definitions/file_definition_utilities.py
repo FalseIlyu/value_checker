@@ -33,30 +33,30 @@ def read_str(reader: BufferedReader, size: int) -> str:
     return reader.read(size).decode("utf-8").replace("\0", "")
 
 
-def write_bool(writer: BufferedWriter, bool: bool) -> None:
+def write_bool(writer: BufferedWriter, value: bool) -> None:
     """ Return the nex byte in a file in a boolean"""
-    writer.write(bool.to_bytes(1, byteorder="little", signed=False))
+    writer.write(value.to_bytes(1, byteorder="little", signed=False))
 
 
-def write_float(writer: BufferedWriter, float: float) -> None:
+def write_float(writer: BufferedWriter, value: float) -> None:
     """Return the 4 next bytes in a file as a float"""
-    writer.write(struct.pack("<f", float))
+    writer.write(struct.pack("<f", value))
 
 
 def write_int16(
     writer: BufferedWriter,
-    int: int,
+    value: int,
     signed: bool = False
 ) -> None:
-    writer.write(int.to_bytes(2, byteorder="little", signed=signed))
+    writer.write(value.to_bytes(2, byteorder="little", signed=signed))
 
 
 def write_int32(
     writer: BufferedWriter,
-    int: int,
+    value: int,
     signed: bool = False
 ) -> None:
-    writer.write(int.to_bytes(4, byteorder="little", signed=signed))
+    writer.write(value.to_bytes(4, byteorder="little", signed=signed))
 
 
 def write_vector(writer: BufferedWriter, vector: Iterable, type_fun) -> None:

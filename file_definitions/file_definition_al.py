@@ -195,7 +195,7 @@ class AnimationData:
 
             reader.seek(offset)
             self.unknownDataSize = read_int32(reader)
-            self.position = read_vector(reader, 3, read_float)
+            read_vector(reader, 3, read_float)
             self.unknownData = read_vector(
                 reader,
                 int(self.unknownDataSize / 4),
@@ -216,10 +216,12 @@ class AnimationData:
             self.point = read_vector(reader, 3, read_float)
 
             self.boneRotation = [
-                read_vector(reader, 4, read_float) for _ in range(self.animationInfo.boneCount)
+                read_vector(reader, 4, read_float)
+                for _ in range(self.animationInfo.boneCount)
             ]
             self.bonePosition = [
-                read_vector(reader, 3, read_float) for _ in range(self.animationInfo.boneCount)
+                read_vector(reader, 3, read_float)
+                for _ in range(self.animationInfo.boneCount)
             ]
 
             frameSize = self.unknowns1[0] + self.unknowns1[1]
@@ -227,6 +229,10 @@ class AnimationData:
                 [read_vector(reader, 3, read_int16) for _ in range(frameSize)]
                 for _ in range(self.animationInfo.frameCount - 1)
             ]
+            """self.keyFrames = [
+                [[val / 32767.0 for val in vector] for vector in frame]
+                for frame in self.keyFrames
+            ]"""
             return
         else:
             raise ValueError("Need a valid BufferedReader")
