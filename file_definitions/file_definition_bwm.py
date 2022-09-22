@@ -1,4 +1,3 @@
-# <pep8-80 compliant>
 # coding=utf-8
 """ Structures of a .bwm with associated IO """
 from io import BufferedReader, BufferedWriter

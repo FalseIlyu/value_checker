@@ -1,4 +1,3 @@
-# <pep8-80 compliant>
 # coding=utf-8
 """Module containing function generally usefull to parsing binary files"""
 from io import BufferedReader, BufferedWriter

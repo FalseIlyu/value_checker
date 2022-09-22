@@ -24,20 +24,10 @@ class AlFile:
                 AnimationMetadata(reader)
                 for _ in range(self.header.animationCount)
                 ]
-            size = [
-                self.animationMetadataArray[i+1].animationOffset
-                for i in range(self.header.animationCount - 1)
-                ]
-            size.append(self.header.size + 0x60)
-            size = [
-                size[i] - self.animationMetadataArray[i].animationOffset
-                for i in range(len(size))
-                ]
             self.animationDataArray = [
                 AnimationData(
                     reader,
-                    self.animationMetadataArray[i].animationOffset,
-                    size[i]
+                    self.animationMetadataArray[i].animationOffset
                     )
                 for i in range(self.header.animationCount)
                 ]
@@ -105,7 +95,8 @@ class AnimationHeader:
             self.name = read_str(reader, 0x40)
             self.animationType = read_int32(reader)
             self.animationEventStringSize = read_int32(reader)
-            self.unknowns1 = read_vector(reader, 3, read_int32)
+            self.offsetBlockSize = read_int32(reader)
+            self.unknowns1 = read_vector(reader, 2, read_int32)
             self.animationEventCount = read_int32(reader)
             self.boneCount = read_int32(reader)
             self.frameCount = read_int32(reader)
@@ -173,18 +164,15 @@ class AnimationEvent:
         reader.seek(currentPos)
         return
 
-
 class AnimationKeyFrame:
     def __init__(self, reader: BufferedReader, numBones: int) -> None:
-        self.timestamp = read_int32(reader)
-        self.transorm = [
-            {
-                "Rotation": [read_int32(reader) for _ in range(4)],
-                "Transform": [read_int32(reader) for _ in range(3)]
-            }
-            for _ in range(numBones)
+        self.boneRotation = [
+            read_vector(reader, 3, read_int16) for _ in range(numBones)
         ]
-        pass
+        self.boneRotation = [
+            [val * 0.000030518509 for val in bone]
+            for bone in self.boneRotation
+        ]
 
 
 class AnimationData:
@@ -192,7 +180,7 @@ class AnimationData:
     Maybe binary data of an animation
     Size : 0x90 + ???
     """
-    def __init__(self, reader: BufferedReader, offset: int, size: int) -> None:
+    def __init__(self, reader: BufferedReader, offset: int) -> None:
         if reader:
             reader.seek(offset)
             self.animationInfo = AnimationHeader(reader)
@@ -202,25 +190,43 @@ class AnimationData:
                 AnimationEvent(reader, offset) for _ in range(animEventCount)
             ]
 
-            self.size = size - 0x90 - (0x48 * animEventCount)\
-                - animEventStringSize - self.animationInfo.unknowns1[0] - 4
             offset = reader.tell()\
-                + animEventStringSize  # + self.animationInfo.unknowns1[0]
+                + animEventStringSize
 
             reader.seek(offset)
-            self.unknown = read_int32(reader)
+            self.unknownDataSize = read_int32(reader)
+            self.position = read_vector(reader, 3, read_float)
             self.unknownData = read_vector(
                 reader,
-                int((self.animationInfo.unknowns1[0] + self.unknown)/4),
+                int(self.unknownDataSize / 4),
                 read_int32
             )
 
-            self.size -= self.unknown
-            self.unknownData1 = read_vector(
-                reader,
-                int(self.size/4),
-                read_float
-            )
+            self.tuple = [
+                read_vector(reader, 2, read_int32)
+                for _ in range(self.animationInfo.frameCount)
+            ]
+            offset = reader.tell() + self.animationInfo.offsetBlockSize\
+                - (0x8 * self.animationInfo.frameCount)
+            reader.seek(offset)
+
+            self.unknowns1 = read_vector(reader, 2, read_int32)
+            self.unknowns2 = read_vector(reader, 8, read_int32)
+            self.unknowns3 = read_vector(reader, 3, read_int32)
+            self.point = read_vector(reader, 3, read_float)
+
+            self.boneRotation = [
+                read_vector(reader, 4, read_float) for _ in range(self.animationInfo.boneCount)
+            ]
+            self.bonePosition = [
+                read_vector(reader, 3, read_float) for _ in range(self.animationInfo.boneCount)
+            ]
+
+            frameSize = self.unknowns1[0] + self.unknowns1[1]
+            self.keyFrames = [
+                [read_vector(reader, 3, read_int16) for _ in range(frameSize)]
+                for _ in range(self.animationInfo.frameCount - 1)
+            ]
             return
         else:
             raise ValueError("Need a valid BufferedReader")
